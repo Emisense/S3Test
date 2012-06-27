@@ -1,0 +1,58 @@
+/*
+  ==============================================================================
+
+    SHA1.h
+    Created: 27 Jun 2012 7:48:01am
+    Author:  Joe Fitzpatrick
+
+  ==============================================================================
+*/
+
+#ifndef __SHA1_H_8C01E153__
+#define __SHA1_H_8C01E153__
+
+#include "../JuceLibraryCode/JuceHeader.h"
+
+/////////////////////////////////////////////////////////////////////////////
+// Declare SHA1 workspace
+
+class SHA1
+{
+public:
+	// Constructor and Destructor
+	SHA1();
+	~SHA1();
+        
+	void reset();
+    
+	// Update the hash value
+	void update (const void* data, uint32 len);
+    void update (MemoryBlock& data);
+    
+	// Finalize hash and report
+	MemoryBlock finalize();
+    
+private:
+	uint32 m_state[5];
+	uint32 m_count[2];
+	uint8  m_buffer[64];
+	uint8  m_digest[20];
+
+    typedef union
+    {
+        uint8  c[64];
+        uint32 l[16];
+    } SHA1_WORKSPACE_BLOCK;
+    
+	// Private SHA-1 transformation
+	void transform (uint32* state, const uint8* buffer);
+    
+	// Member variables
+	uint8 m_workspace[64];
+	SHA1_WORKSPACE_BLOCK *m_block; // SHA1 pointer to the byte array above
+    
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SHA1)    
+};
+
+
+#endif  // __SHA1_H_8C01E153__

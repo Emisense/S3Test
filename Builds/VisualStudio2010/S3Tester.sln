@@ -1,0 +1,19 @@
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{049D0B6A-0053-0FE0-C70D-68B2CA7B61AD}") = "S3Tester", "S3Tester.vcxproj", "{01D1C254-9AE8-4794-8D9C-1AA1F3B284C9}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{01D1C254-9AE8-4794-8D9C-1AA1F3B284C9}.Debug|Win32.ActiveCfg = Debug|Win32
+		{01D1C254-9AE8-4794-8D9C-1AA1F3B284C9}.Debug|Win32.Build.0 = Debug|Win32
+		{01D1C254-9AE8-4794-8D9C-1AA1F3B284C9}.Release|Win32.ActiveCfg = Release|Win32
+		{01D1C254-9AE8-4794-8D9C-1AA1F3B284C9}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

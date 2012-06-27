@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<JUCERPROJECT id="W0QWSn" name="S3Tester" projectType="guiapp" version="1.0.0"
+              jucerVersion="3.0.0">
+  <MAINGROUP id="kU49th" name="S3Tester">
+    <GROUP id="{0AC51B19-7C6E-DCD3-9CF8-40BF04DC228A}" name="Source">
+      <FILE id="DQaMiI" name="AmazonS3.cpp" compile="1" resource="0" file="Source/AmazonS3.cpp"/>
+      <FILE id="WwDKV0" name="AmazonS3.h" compile="0" resource="0" file="Source/AmazonS3.h"/>
+      <FILE id="smFAnJ" name="HMAC_SHA1.cpp" compile="1" resource="0" file="Source/HMAC_SHA1.cpp"/>
+      <FILE id="kOrncZ" name="HMAC_SHA1.h" compile="0" resource="0" file="Source/HMAC_SHA1.h"/>
+      <FILE id="ImckyR" name="SHA1.cpp" compile="1" resource="0" file="Source/SHA1.cpp"/>
+      <FILE id="tc5P4Q" name="SHA1.h" compile="0" resource="0" file="Source/SHA1.h"/>
+      <FILE id="gxhHsQ" name="Base64.cpp" compile="1" resource="0" file="Source/Base64.cpp"/>
+      <FILE id="tWVOtB" name="Base64.h" compile="0" resource="0" file="Source/Base64.h"/>
+      <FILE id="mgbHOM" name="MainWindow.cpp" compile="1" resource="0" file="Source/MainWindow.cpp"/>
+      <FILE id="Z4EW8W" name="MainWindow.h" compile="0" resource="0" file="Source/MainWindow.h"/>
+      <FILE id="B65AfK" name="Main.cpp" compile="1" resource="0" file="Source/Main.cpp"/>
+    </GROUP>
+  </MAINGROUP>
+  <MODULES>
+    <MODULE id="juce_core" showAllCode="1" useLocalCopy="1"/>
+    <MODULE id="juce_events" showAllCode="1" useLocalCopy="1"/>
+    <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="1"/>
+    <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="1"/>
+    <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="1"/>
+    <MODULE id="juce_gui_extra" showAllCode="1" useLocalCopy="1"/>
+    <MODULE id="juce_gui_audio" showAllCode="1" useLocalCopy="1"/>
+    <MODULE id="juce_cryptography" showAllCode="1" useLocalCopy="1"/>
+  </MODULES>
+  <EXPORTFORMATS>
+    <XCODE_MAC targetFolder="Builds/MacOSX" juceFolder="../juce/modules">
+      <CONFIGURATIONS>
+        <CONFIGURATION name="Debug" isDebug="1" optimisation="1" targetName="S3Tester"/>
+        <CONFIGURATION name="Release" isDebug="0" optimisation="2" targetName="S3Tester"/>
+      </CONFIGURATIONS>
+    </XCODE_MAC>
+  </EXPORTFORMATS>
+  <JUCEOPTIONS/>
+</JUCERPROJECT>

@@ -65,15 +65,31 @@ MainAppWindow::MainAppWindow()
     Logger::outputDebugString (URL::addEscapeChars (Base64::encode (b), true));
         
     AmazonS3 s3 ("AKIAIJR3I2G5CDAGEDHA", "tFNLB44NThsjNlCI/BNs5G1ztbHKtkWm2+cWpkeK");
-    Logger::outputDebugString (s3.createURL ("GET", "com.pearsports.mobiledata", "testObj"));
-    Logger::outputDebugString (s3.createURL ("HEAD", "com.pearsports.mobiledata", "testObj"));
-    File f ("~/Src/aws/test");
-    MD5 md5 (f);
-    b = md5.getRawChecksumData();
-    Logger::outputDebugString ("MD5");
-    for (int n=0; n < b.getSize(); n++)
-        Logger::outputDebugString (String::toHexString ((uint8)(b[n])));
+    S3Object obj ("com.pearsports.mobiledata", "testObj");
     
+    S3ObjectInfo objHead = s3.getObjectInfo (obj);
+    if (objHead.isValid())
+        Logger::outputDebugString (String (objHead.getLength()));
+
+    s3.getObject (obj, File (CharPointer_UTF8 ("~/Src/aws/test")));
+    s3.putObject (obj, File (CharPointer_UTF8 ("~/Src/aws/test")));
+    objHead = s3.getObjectInfo (obj);
+    if (objHead.isValid())
+        Logger::outputDebugString (String (objHead.getLength()));
+    s3.putObject (obj, File (CharPointer_UTF8 ("~/Src/aws/test2")));
+    objHead = s3.getObjectInfo (obj);
+    if (objHead.isValid())
+        Logger::outputDebugString (String (objHead.getLength()));
+    s3.putObject (obj, File (CharPointer_UTF8 ("~/Src/aws/test3")));
+    objHead = s3.getObjectInfo (obj);
+    if (objHead.isValid())
+        Logger::outputDebugString (String (objHead.getLength()));
+    
+    obj.setId ("testObj666");
+    s3.putObject (obj, File (CharPointer_UTF8 ("~/Src/aws/test2")));
+    objHead = s3.getObjectInfo (obj);
+    if (objHead.isValid())
+        Logger::outputDebugString (String (objHead.getLength()));    
 }
 
 MainAppWindow::~MainAppWindow()

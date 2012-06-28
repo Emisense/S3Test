@@ -62,7 +62,7 @@ String Base64::encode (const MemoryBlock& data)
 
 uint8 Base64::lookup (const char c)
 {
-    // Slow!
+    // Slow!!!! But easy...
     for (uint8 n = 0; n < 64 ; n++)
     {
         if (c == encodeTable[n])

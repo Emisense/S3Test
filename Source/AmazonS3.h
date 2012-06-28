@@ -32,7 +32,7 @@ public:
     String getId() const     { return objectId; }
 
     void setBucket (const String& bucket_) { bucket = bucket_; }
-    void setId (const String& objectId_)   { objectId = objectId; }
+    void setId (const String& objectId_)   { objectId = objectId_; }
     
 private:
     //==============================================================================

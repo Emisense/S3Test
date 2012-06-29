@@ -67,29 +67,35 @@ MainAppWindow::MainAppWindow()
     AmazonS3 s3 ("AKIAIJR3I2G5CDAGEDHA", "tFNLB44NThsjNlCI/BNs5G1ztbHKtkWm2+cWpkeK");
     S3Object obj ("com.pearsports.mobiledata", "testObj");
     
-    S3ObjectInfo objHead = s3.getObjectInfo (obj);
-    if (objHead.isValid())
-        Logger::outputDebugString (String (objHead.getLength()));
+    if (s3.updateObjectInfo (obj))
+        if (obj.isSuccess())
+            Logger::outputDebugString (String (obj.getInfo().getLength()));
+    Logger::outputDebugString (obj.getResult());
 
-    s3.getObject (obj, File (CharPointer_UTF8 ("~/Src/aws/test")));
-    s3.putObject (obj, File (CharPointer_UTF8 ("~/Src/aws/test")));
-    objHead = s3.getObjectInfo (obj);
-    if (objHead.isValid())
-        Logger::outputDebugString (String (objHead.getLength()));
-    s3.putObject (obj, File (CharPointer_UTF8 ("~/Src/aws/test2")));
-    objHead = s3.getObjectInfo (obj);
-    if (objHead.isValid())
-        Logger::outputDebugString (String (objHead.getLength()));
-    s3.putObject (obj, File (CharPointer_UTF8 ("~/Src/aws/test3")));
-    objHead = s3.getObjectInfo (obj);
-    if (objHead.isValid())
-        Logger::outputDebugString (String (objHead.getLength()));
-    
+    if (s3.getObject (obj, File (CharPointer_UTF8 ("~/Src/aws/test"))))
+    {
+        if (obj.isSuccess())
+            Logger::outputDebugString ("Get OK");
+        Logger::outputDebugString (obj.getResult());
+        Logger::outputDebugString (obj.getInfo().getRawHeader());
+    }
+
+    if (s3.putObject (obj, File (CharPointer_UTF8 ("~/Src/aws/test"))))
+    {
+        if (obj.isSuccess())
+            Logger::outputDebugString ("Put OK");
+        Logger::outputDebugString (obj.getResult());
+        Logger::outputDebugString (obj.getInfo().getRawHeader());
+    }
+
     obj.setId ("testObj666");
-    s3.putObject (obj, File (CharPointer_UTF8 ("~/Src/aws/test2")));
-    objHead = s3.getObjectInfo (obj);
-    if (objHead.isValid())
-        Logger::outputDebugString (String (objHead.getLength()));    
+    if (s3.putObject (obj, File (CharPointer_UTF8 ("~/Src/aws/test2"))))
+    {
+        if (obj.isSuccess())
+            Logger::outputDebugString ("Put 666 OK");
+        Logger::outputDebugString (obj.getResult());
+        Logger::outputDebugString (obj.getInfo().getRawHeader());
+    }
 }
 
 MainAppWindow::~MainAppWindow()

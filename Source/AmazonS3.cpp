@@ -12,15 +12,24 @@
 #include "Base64.h"
 #include "AmazonS3.h"
 
+
 //==============================================================================
 //==============================================================================
-bool S3ObjectInfo::isValid()
+const S3ObjectInfo S3ObjectInfo::empty;
+
+//==============================================================================
+bool S3ObjectInfo::isSuccess()
 {
     return header.fromLastOccurrenceOf ("HTTP", true, false).contains ("200 OK");
 }
 
+bool S3ObjectInfo::isValid()
+{
+    return header.startsWith ("HTTP");
+}
+
 //==============================================================================
-String S3ObjectInfo::resultCode()
+String S3ObjectInfo::getResult()
 {
     String resultLine = header.fromLastOccurrenceOf ("HTTP", true, false)
                               .upToFirstOccurrenceOf ("\n", false, false);
@@ -50,10 +59,16 @@ String S3ObjectInfo::getMD5()
 
 //==============================================================================
 //==============================================================================
-bool AmazonS3::getObject (const S3Object& object, const File& file)
+bool AmazonS3::getObject (S3Object& object, const File& file)
 {
-    S3ObjectInfo objInfo = getObjectInfo (object);
-    if (! objInfo.isValid())
+    object.clearFileAndInfo();
+    
+    if (! updateObjectInfo (object))
+        return false;
+    
+    S3ObjectInfo objInfo = object.getInfo();
+    
+    if (! objInfo.isSuccess())
         return false;
     
     String url = createURL ("get", object);
@@ -73,11 +88,14 @@ bool AmazonS3::getObject (const S3Object& object, const File& file)
     if (md5.toHexString().compareIgnoreCase (objInfo.getMD5()))
         return false;
     
+    object.setFile (file);
     return true;
 }
 
-bool AmazonS3::putObject (const S3Object& object, const File& file)
+bool AmazonS3::putObject (S3Object& object, const File& file)
 {
+    object.clearFileAndInfo();
+    
     if (! file.exists())
         return false;
     
@@ -87,7 +105,7 @@ bool AmazonS3::putObject (const S3Object& object, const File& file)
                                    file.getFullPathName() + "' " +
                                    "--location '" + url + "'"));
     
-    if (! objInfo.isValid())
+    if (! objInfo.isSuccess())
         return false;
     
     MD5 md5 (file);
@@ -95,13 +113,25 @@ bool AmazonS3::putObject (const S3Object& object, const File& file)
     if (md5.toHexString().compareIgnoreCase (objInfo.getMD5()))
         return false;
 
+    object.setFile (file);
+    object.setInfo (objInfo);
     return true;
 }
 
 //==============================================================================
-S3ObjectInfo AmazonS3::getObjectInfo (const S3Object& object)
+bool AmazonS3::updateObjectInfo (S3Object& object)
 {
-    return S3ObjectInfo (runCurl ("--head '" + createURL ("head", object) + "'"));
+    object.clearFileAndInfo();
+    
+    S3ObjectInfo info (runCurl ("--head '" + createURL ("head", object) + "'"));
+
+    if (info.isValid())
+    {
+        object.setInfo (info);
+        return true;
+    }
+    else
+        return false;
 }
 
 //==============================================================================

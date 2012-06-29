@@ -15,37 +15,6 @@
 
 //==============================================================================
 //==============================================================================
-class S3Object
-{
-public:
-    //==============================================================================
-    S3Object() {}
-    
-    S3Object (const String& bucket_, const String& objectId_)
-    : bucket (bucket_),
-      objectId (objectId_) {}
-  
-    ~S3Object() {}
-    
-    //==============================================================================
-    String getBucket() const { return bucket; }
-    String getId() const     { return objectId; }
-
-    void setBucket (const String& bucket_) { bucket = bucket_; }
-    void setId (const String& objectId_)   { objectId = objectId_; }
-    
-private:
-    //==============================================================================
-    String bucket;
-    String objectId;
-    
-    //==============================================================================
-    JUCE_LEAK_DETECTOR(S3Object)
-};
-
-
-//==============================================================================
-//==============================================================================
 class S3ObjectInfo
 {
 public:
@@ -58,13 +27,17 @@ public:
     ~S3ObjectInfo() {}
     
     //==============================================================================
+    bool isSuccess();
     bool isValid();
-    String resultCode();
+    
+    String getResult();
     
     int getLength();
     String getMD5();
     
     String getRawHeader() { return header; }
+    
+    static const S3ObjectInfo empty;
     
 private:
     //==============================================================================
@@ -72,6 +45,60 @@ private:
     
     //==============================================================================
     JUCE_LEAK_DETECTOR(S3ObjectInfo)
+};
+
+
+//==============================================================================
+//==============================================================================
+class S3Object
+{
+public:
+    //==============================================================================
+    S3Object() {}
+    
+    S3Object (const String& bucket_, const String& objectId_)
+    : bucket (bucket_),
+      objectId (objectId_) {}
+    
+    ~S3Object() {}
+    
+    //==============================================================================
+    String getBucket() const     { return bucket; }
+    String getId() const         { return objectId; }
+    S3ObjectInfo getInfo() const { return lastInfo; }
+    File getFile() const         { return lastFile; }
+    
+    void setBucket (const String& bucket_) 
+    { 
+        bucket = bucket_;
+        lastFile = File::nonexistent;
+        lastInfo = S3ObjectInfo();
+    }
+    
+    void setId (const String& objectId_)
+    { 
+        objectId = objectId_; 
+        lastFile = File::nonexistent;
+        lastInfo = S3ObjectInfo();    
+    }
+    
+    bool isSuccess()   { return lastInfo.isSuccess(); }
+    String getResult() { return lastInfo.getResult(); }
+
+        void clearFileAndInfo() { lastFile = File::nonexistent; lastInfo = S3ObjectInfo::empty; }
+    void setFile (const File& file)         { lastFile = file; }
+    void setInfo (const S3ObjectInfo& info) { lastInfo = info; }
+    
+private:
+    //==============================================================================
+    String bucket;
+    String objectId;
+
+    S3ObjectInfo lastInfo;
+    File lastFile;
+    
+    //==============================================================================
+    JUCE_LEAK_DETECTOR(S3Object)
 };
 
 
@@ -88,10 +115,10 @@ public:
     ~AmazonS3() {}
 
     //==============================================================================
-    S3ObjectInfo getObjectInfo (const S3Object& object);
+    bool updateObjectInfo (S3Object& object);
     
-    bool getObject (const S3Object& object, const File& file);
-    bool putObject (const S3Object& object, const File& file);
+    bool getObject (S3Object& object, const File& file);
+    bool putObject (S3Object& object, const File& file);
     
 private:    
     //==============================================================================

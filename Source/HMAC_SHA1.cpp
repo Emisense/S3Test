@@ -9,59 +9,67 @@
 */
 
 #include "HMAC_SHA1.h"
+#include "SHA1.h"
 
+const static int HMAC_BLOCK_SIZE = SHA1::SHA1_BLOCK_SIZE;
+
+
+//==============================================================================
+//==============================================================================
 MemoryBlock HMAC_SHA1::encode (const String& text, const String& key)
 {
     return encode (text.toUTF8(), text.length(), key.toUTF8(), key.length());
 }
 
-MemoryBlock HMAC_SHA1::encode (const char* text, int text_len, const char* key, int key_len)
+//==============================================================================
+MemoryBlock HMAC_SHA1::encode (const char* text, int textLen, const char* key, int keyLen)
 {
-	memset(SHA1_Key, 0, SHA1_BLOCK_SIZE);
+    SHA1 sha1;
     
-	/* repeated 64 times for values in ipad and opad */
-	memset(m_ipad, 0x36, sizeof(m_ipad));
-	memset(m_opad, 0x5c, sizeof(m_opad));
-    
-	/* STEP 1 */
-	if (key_len > SHA1_BLOCK_SIZE)
+	// Step 1, key
+    MemoryBlock sha1Key (HMAC_BLOCK_SIZE, true);
+
+	if (keyLen > HMAC_BLOCK_SIZE)
 	{
-		SHA1::reset();
-		SHA1::update(key, key_len);
-		MemoryBlock b = SHA1::finalize();
-        b.copyTo (SHA1_Key, 0, b.getSize());
+		sha1.reset();
+		sha1.update (key, keyLen);
+		MemoryBlock b = sha1.finalize();
+        sha1Key.copyFrom (b.getData(), 0, b.getSize());
 	}
 	else
-		memcpy(SHA1_Key, key, key_len);
+		sha1Key.copyFrom(key, 0, keyLen);
     
-	/* STEP 2 */
-	for (int i=0; i<sizeof(m_ipad); i++)
-	{
-		m_ipad[i] ^= SHA1_Key[i];		
-	}
+	// Step 2, apply key to ipad
+    MemoryBlock ipad (HMAC_BLOCK_SIZE);
+    ipad.fillWith (0x36);
+
+	for (int i = 0; i < ipad.getSize(); ++i)
+		ipad[i] ^= sha1Key[i];		
+
+	// Step 3, combine ipad with text
+    MemoryBlock appendBuf1 (ipad.getSize() + textLen);
+    appendBuf1.copyFrom (ipad.getData(), 0, ipad.getSize());
+    appendBuf1.copyFrom (text, ipad.getSize(), textLen);
     
-	/* STEP 3 */
-	memcpy(AppendBuf1, m_ipad, sizeof(m_ipad));
-	memcpy(AppendBuf1 + sizeof(m_ipad), text, text_len);
+	// Step 4, encode it
+	sha1.reset();
+	sha1.update (appendBuf1);
+	MemoryBlock report = sha1.finalize();
     
-	/* STEP 4 */
-	SHA1::reset();
-	SHA1::update((uint8 *)AppendBuf1, sizeof(m_ipad) + text_len);
-	MemoryBlock b = SHA1::finalize();
-    b.copyTo (szReport, 0, b.getSize());
+	// Step 5, apply key to opad
+    MemoryBlock opad (HMAC_BLOCK_SIZE);
+    opad.fillWith (0x5c);
     
-	/* STEP 5 */
-	for (int j=0; j<sizeof(m_opad); j++)
-	{
-		m_opad[j] ^= SHA1_Key[j];
-	}
+	for (int i = 0; i < opad.getSize(); ++i)
+		opad[i] ^= sha1Key[i];
     
-	/* STEP 6 */
-	memcpy(AppendBuf2, m_opad, sizeof(m_opad));
-	memcpy(AppendBuf2 + sizeof(m_opad), szReport, SHA1_DIGEST_LENGTH);
+	// Step 6, combine opad with previous report
+    MemoryBlock appendBuf2 (opad.getSize() + report.getSize());
+    appendBuf2.copyFrom (opad.getData(), 0, opad.getSize());
+    appendBuf2.copyFrom (report.getData(), opad.getSize(), report.getSize());
     
-	/*STEP 7 */
-	SHA1::reset();
-	SHA1::update((uint8 *)AppendBuf2, sizeof(m_opad) + SHA1_DIGEST_LENGTH);
-    return SHA1::finalize();
+	// Step 7, encode and return that
+	sha1.reset();
+	sha1.update (appendBuf2);
+    return sha1.finalize();
 }

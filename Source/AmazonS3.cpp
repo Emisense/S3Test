@@ -35,8 +35,9 @@ String S3ObjectInfo::getResult()
                               .upToFirstOccurrenceOf ("\n", false, false);
     
     if (! resultLine.startsWith ("HTTP"))
-        return String ("Invalid");
+        return String ("Invalid Response");
     
+    // Drop the 'HTTP/1.1 xxx '
     return resultLine.substring (13);
 }
 
@@ -101,20 +102,19 @@ bool AmazonS3::putObject (S3Object& object, const File& file)
     
     String url = createURL ("put", object);
     
-    S3ObjectInfo objInfo (runCurl ("--request PUT --dump-header - --upload-file '" +
-                                   file.getFullPathName() + "' " +
-                                   "--location '" + url + "'"));
+    object.setInfo (S3ObjectInfo (runCurl ("--request PUT --dump-header - --upload-file '" +
+                                  file.getFullPathName() + "' " +
+                                  "--location '" + url + "'")));
     
-    if (! objInfo.isSuccess())
+    if (! object.isSuccess())
         return false;
     
     MD5 md5 (file);
     
-    if (md5.toHexString().compareIgnoreCase (objInfo.getMD5()))
+    if (md5.toHexString().compareIgnoreCase (object.getInfo().getMD5()))
         return false;
 
     object.setFile (file);
-    object.setInfo (objInfo);
     return true;
 }
 
@@ -123,15 +123,9 @@ bool AmazonS3::updateObjectInfo (S3Object& object)
 {
     object.clearFileAndInfo();
     
-    S3ObjectInfo info (runCurl ("--head '" + createURL ("head", object) + "'"));
+    object.setInfo (S3ObjectInfo (runCurl ("--head '" + createURL ("head", object) + "'")));
 
-    if (info.isValid())
-    {
-        object.setInfo (info);
-        return true;
-    }
-    else
-        return false;
+    return object.isSuccess();
 }
 
 //==============================================================================
@@ -145,7 +139,7 @@ String AmazonS3::createURL (const String& verb, const S3Object& object)
                         expires + "\n" + 
                         canonicalizedResource;
     
-    String signature = URL::addEscapeChars (Base64::encode (HMAC_SHA1().encode (signString, secret)), true);
+    String signature = URL::addEscapeChars (Base64::encode (HMAC_SHA1::encode (signString, secret)), true);
 
     // Build up the URL
     String url = "https://" + object.getBucket() + ".s3.amazonaws.com/" + object.getId() +

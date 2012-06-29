@@ -10,6 +10,7 @@
 
 #include "MainWindow.h"
 #include "Base64.h"
+#include "SHA1.h"
 #include "HMAC_SHA1.h"
 #include "AmazonS3.h"
 
@@ -36,9 +37,7 @@ MainAppWindow::MainAppWindow()
     for (int n=0; n < b.getSize(); n++)
         Logger::outputDebugString (String::toHexString ((uint8)(b[n])));
     
-    HMAC_SHA1 hm;
-    
-    b = hm.encode ("Test", 4, "Key", 3);
+    b = HMAC_SHA1::encode ("Test", 4, "Key", 3);
     Logger::outputDebugString ("HMAC");
     for (int n=0; n < b.getSize(); n++)
         Logger::outputDebugString (String::toHexString ((uint8)(b[n])));
@@ -54,14 +53,13 @@ MainAppWindow::MainAppWindow()
     String string_to_sign = HTTPVerb + "\n" + ContentMD5 + "\n" + ContentType + "\n" + 
     Expires + "\n" + CanonicalizedAmzHeaders + CanonicalizedResource;
  
-    HMAC_SHA1 hmac;
-    
-    b = hmac.encode (string_to_sign, AWSSecretAccessKey);
+    b = HMAC_SHA1::encode (string_to_sign, AWSSecretAccessKey);
 
     Logger::outputDebugString ("HMAC2");
     for (int n=0; n < b.getSize(); n++)
         Logger::outputDebugString (String::toHexString ((uint8)(b[n])));
     
+    // Should be "rucSbH0yNEcP9oM2XNlouVI3BH4%3d"
     Logger::outputDebugString (URL::addEscapeChars (Base64::encode (b), true));
         
     AmazonS3 s3 ("AKIAIJR3I2G5CDAGEDHA", "tFNLB44NThsjNlCI/BNs5G1ztbHKtkWm2+cWpkeK");

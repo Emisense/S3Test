@@ -64,13 +64,19 @@ bool AmazonS3::getObject (S3Object& object, const File& file)
 {
     object.clearFileAndInfo();
     
-    if (! updateObjectInfo (object))
-        return false;
+    S3ObjectInfo objInfo;
     
-    S3ObjectInfo objInfo = object.getInfo();
+    // We can't get info for sub-elements
+    if (! object.getId().containsChar ('?'))
+    {
+        if (! updateObjectInfo (object))
+            return false;
     
-    if (! objInfo.isSuccess())
-        return false;
+        objInfo = object.getInfo();
+    
+        if (! objInfo.isSuccess())
+            return false;
+    }
     
     String url = createURL ("get", object);
     
@@ -81,9 +87,22 @@ bool AmazonS3::getObject (S3Object& object, const File& file)
     if (result.isNotEmpty())
         return false;
     
+    // Nothing to match up on sub-element, just try to parse the XML results
+    if (object.getId().containsChar ('?'))
+    {
+        object.setInfo (S3ObjectInfo ("HTTP 200 OK"));
+        return true;
+    }
+    
+    // We can't verify the length and md5 of directory requests, again, just
+    // verify the XML
+    if (! object.getId().length())
+        return true;
+    
     if (file.getSize() != objInfo.getLength())
         return false;
     
+    // Data file request, compare md5
     MD5 md5 (file);
     
     if (md5.toHexString().compareIgnoreCase (objInfo.getMD5()))
@@ -93,16 +112,28 @@ bool AmazonS3::getObject (S3Object& object, const File& file)
     return true;
 }
 
-bool AmazonS3::putObject (S3Object& object, const File& file)
+bool AmazonS3::putObject (S3Object& object, const File& file, bool makePublic)
 {
     object.clearFileAndInfo();
     
     if (! file.exists())
         return false;
     
-    String url = createURL ("put", object);
+    String url;
+    String header;
     
-    object.setInfo (S3ObjectInfo (runCurl ("--request PUT --dump-header - --upload-file '" +
+    if (makePublic)
+    {
+        header = "--header 'x-amz-acl:public-read' ";
+        url = createURL ("put", object, "x-amz-acl:public-read\n");
+    }
+    else
+    {
+        header = "";
+        url = createURL ("put", object);
+    }
+    
+    object.setInfo (S3ObjectInfo (runCurl (header + "--request PUT --dump-header - --upload-file '" +
                                   file.getFullPathName() + "' " +
                                   "--location '" + url + "'")));
     
@@ -119,6 +150,40 @@ bool AmazonS3::putObject (S3Object& object, const File& file)
 }
 
 //==============================================================================
+bool AmazonS3::getDirectory (const String& bucket, StringArray& list)
+{
+    list.clear();
+    
+    File temp = File::createTempFile (".xml");
+    
+    S3Object object (bucket, "");
+    
+    if (! getObject (object, temp))
+    {
+        temp.deleteFile();
+        return false;
+    }
+    
+    XmlElement* xml = XmlDocument::parse (temp);
+    temp.deleteFile();
+    
+    if (xml != nullptr)
+    {
+        forEachXmlChildElementWithTagName(*xml, c, "Contents")
+        {
+            XmlElement *key = c->getChildByName("Key");
+            if (key)
+                list.add (key->getAllSubText());
+        }
+        
+        delete xml;
+        return true;
+    }
+    
+    return false;
+}
+
+//==============================================================================
 bool AmazonS3::updateObjectInfo (S3Object& object)
 {
     object.clearFileAndInfo();
@@ -129,23 +194,31 @@ bool AmazonS3::updateObjectInfo (S3Object& object)
 }
 
 //==============================================================================
-String AmazonS3::createURL (const String& verb, const S3Object& object)
+String AmazonS3::createURL (const String& verb, const S3Object& object, const String& amzHeader)
 {
     // Create a signiture
     String expires ((Time::getCurrentTime().toMilliseconds() / 1000) + 300);
     String canonicalizedResource = "/" + object.getBucket() + "/" + object.getId();
 
     String signString = verb.toUpperCase() + "\n\n\n" + 
-                        expires + "\n" + 
+                        expires + "\n" +
+                        amzHeader +
                         canonicalizedResource;
     
     String signature = URL::addEscapeChars (Base64::encode (HMAC_SHA1::encode (signString, secret)), true);
 
     // Build up the URL
-    String url = "https://" + object.getBucket() + ".s3.amazonaws.com/" + object.getId() +
-                 "?AWSAccessKeyId=" + URL::addEscapeChars(credentials, true) +
-                 "&" + "Expires=" + expires + "&Signature=" + signature;
+    String url;
     
+    if (! object.getId().containsChar ('?'))
+        url = "https://" + object.getBucket() + ".s3.amazonaws.com/" + object.getId() +
+                 "?AWSAccessKeyId=" + URL::addEscapeChars (credentials, true) +
+                 "&" + "Expires=" + expires + "&Signature=" + signature;
+    else
+        url = "https://" + object.getBucket() + ".s3.amazonaws.com/" + object.getId() +
+        "&AWSAccessKeyId=" + URL::addEscapeChars (credentials, true) +
+        "&" + "Expires=" + expires + "&Signature=" + signature;
+        
     return url;
 }
 

@@ -118,11 +118,14 @@ public:
     bool updateObjectInfo (S3Object& object);
     
     bool getObject (S3Object& object, const File& file);
-    bool putObject (S3Object& object, const File& file);
+    bool putObject (S3Object& object, const File& file, bool makePublic = false);
+    
+    //==============================================================================
+    bool getDirectory (const String& bucket, StringArray& list);
     
 private:    
     //==============================================================================
-    String createURL (const String& verb, const S3Object& object);
+    String createURL (const String& verb, const S3Object& object, const String& amzHeader = String::empty);
     String runCurl (const String& cmdLine);
     
 private:

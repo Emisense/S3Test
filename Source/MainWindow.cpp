@@ -74,25 +74,44 @@ MainAppWindow::MainAppWindow()
     {
         if (obj.isSuccess())
             Logger::outputDebugString ("Get OK");
-        Logger::outputDebugString (obj.getResult());
-        Logger::outputDebugString (obj.getInfo().getRawHeader());
     }
+    Logger::outputDebugString (obj.getResult());
+    Logger::outputDebugString (obj.getInfo().getRawHeader());
 
     if (s3.putObject (obj, File (CharPointer_UTF8 ("~/Src/aws/test"))))
     {
         if (obj.isSuccess())
             Logger::outputDebugString ("Put OK");
-        Logger::outputDebugString (obj.getResult());
-        Logger::outputDebugString (obj.getInfo().getRawHeader());
     }
+    Logger::outputDebugString (obj.getResult());
+    Logger::outputDebugString (obj.getInfo().getRawHeader());
 
     obj.setId ("testObj666");
-    if (s3.putObject (obj, File (CharPointer_UTF8 ("~/Src/aws/test2"))))
+    if (s3.putObject (obj, File (CharPointer_UTF8 ("~/Src/aws/test2")), true))
     {
         if (obj.isSuccess())
             Logger::outputDebugString ("Put 666 OK");
-        Logger::outputDebugString (obj.getResult());
-        Logger::outputDebugString (obj.getInfo().getRawHeader());
+    }
+    Logger::outputDebugString (obj.getResult());
+    Logger::outputDebugString (obj.getInfo().getRawHeader());
+    
+    obj.setId ("testObj666?acl");
+    if (s3.getObject (obj, File (CharPointer_UTF8 ("~/Src/aws/test-acl"))))
+        if (obj.isSuccess())
+            Logger::outputDebugString ("Get ACL OK");
+    Logger::outputDebugString (obj.getInfo().getRawHeader());
+    
+    obj.setId ("");
+    if (s3.getObject (obj, File (CharPointer_UTF8 ("~/Src/aws/test-ls"))))
+        if (obj.isSuccess())
+            Logger::outputDebugString ("Get LS OK");
+    Logger::outputDebugString (obj.getInfo().getRawHeader());
+    
+    StringArray list;
+    if (s3.getDirectory ("com.pearsports.mobiledata", list))
+    {
+        for (int n=0; n < list.size(); n++)
+            Logger::outputDebugString (list[n]);
     }
 }
 
